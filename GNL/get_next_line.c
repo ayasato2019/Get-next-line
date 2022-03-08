@@ -6,7 +6,7 @@
 /*   By: aysato <aysato@student.42tokyo.jp>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/01/31 22:53:59 by aysato            #+#    #+#             */
-/*   Updated: 2022/03/07 23:19:48 by aysato           ###   ########.fr       */
+/*   Updated: 2022/03/08 23:28:00 by aysato           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,15 +32,14 @@ static char	*ft_extraction_line(char **memo, char **line)
 	*line = NULL;
 	temp = ft_strchr(*memo, '\n');
 	len_total = ft_strlen(*memo);
-	if (temp == NULL && len_total)//文字があって改行がない時
+	if (temp == NULL && len_total)
 	{
 		*line = *memo;
 		*memo = NULL;
 		return (*line);
 	}
-	else if(!len_total)//文字がなくて改行がない
+	else if (!len_total)
 	{
-		ft_free(memo, NULL);
 		ft_free(memo, NULL);
 		return (NULL);
 	}
@@ -51,7 +50,6 @@ static char	*ft_extraction_line(char **memo, char **line)
 		return (NULL);
 	ptr_before = ft_strndup(*memo, (len_before + 1));
 	ft_free(memo, NULL);
-	printf("%p\n", ptr_after);
 	*line = ptr_before;
 	*memo = ptr_after;
 	return (*line);
@@ -62,11 +60,11 @@ static char	*ft_read(int fd, char *memo, char *buff)
 	char		*temp;
 	ssize_t		read_text_byte;
 
-	read_text_byte = 1;//memoにNULLを返すパターンを考える
-	printf("memo1:%-p\n", memo);
-	while (read_text_byte > 0)// && !ft_strchr(memo, '\n')大きなファイルの時に扱えない可能性　メモに入りきらないかも
+	read_text_byte = 1;
+	printf("read_before:%s\n", memo);
+	while (read_text_byte > 0 && memo == NULL)
 	{
-		printf("memo2:%p\n", memo);
+		printf("read_before:%s\n", memo);
 		read_text_byte = read(fd, buff, BUFFER_SIZE);
 		if (read_text_byte == -1)
 		{
@@ -74,8 +72,10 @@ static char	*ft_read(int fd, char *memo, char *buff)
 			return (memo);
 		}
 		buff[read_text_byte] = '\0';
-		temp = memo;//abc
-		memo = ft_strjoin(memo, buff);//abc123
+		temp = memo;
+		memo = ft_strjoin(memo, buff);
+		if (memo == NULL)
+			return (NULL);
 		ft_free(&temp, NULL);
 		if (read_text_byte == 0 && memo == NULL)
 			return (NULL);
@@ -97,7 +97,7 @@ char	*get_next_line(int fd)
 	if (buff == NULL)
 		return (NULL);
 	memo = ft_read(fd, memo, buff);
-	if(!memo)
+	if (!memo)
 		return (NULL);
 	line = ft_extraction_line(&memo, &line);
 	return (line);
