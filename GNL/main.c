@@ -12,40 +12,24 @@
 
 int main()
 {
-    // (void)av = "test.txt";
     char *line = NULL;
-    // int i = 0;
-    // bool flag = true;
 
-	int fd = open("test.txt", O_RDONLY);
+	int fd = open("test1.txt", O_RDONLY);
 	while (1)
 	{
 		line = get_next_line(fd);
-		printf("%s\n", line);
+		printf("%s", line);
 		if (line == NULL)
 			break;
 		free(line);
 	}
 	close(fd);
-    // if (ac == 2)
-    // {
-    //     int fd = open(av[1], O_RDONLY);
-    //     while (i < 20)
-    //     {
-    //         line = get_next_line(fd);
-    //         printf("%4d : %s\n", i++, line);
-    //         if (line == NULL)
-    //             flag =false;
-    //         free(line);
-    //     }
-    //     close(fd);
-    // }
     return (0);
 }
 
-void end(void)__attribute__((destructor));
+// void end(void)__attribute__((destructor));
 
-void end(void)
-{
-    system("leaks a.out");
-}
+// void end(void)
+// {
+//     system("leaks a.out");
+// }
