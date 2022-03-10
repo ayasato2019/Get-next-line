@@ -6,12 +6,11 @@
 /*   By: aysato <aysato@student.42tokyo.jp>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/01/31 22:53:59 by aysato            #+#    #+#             */
-/*   Updated: 2022/03/08 23:28:00 by aysato           ###   ########.fr       */
+/*   Updated: 2022/03/09 23:37:51 by aysato           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
-#include <stdio.h>
 
 void	ft_free(char **dst, char *src)
 {
@@ -20,18 +19,43 @@ void	ft_free(char **dst, char *src)
 }
 
 /*memoの中から改行までをlineに渡す*/
-static char	*ft_extraction_line(char **memo, char **line)
+static char	*ft_extraction_line(char **memo,
+								size_t len_before, size_t len_total)
 {
 	char	*temp;
+	char	*memo_single;
 	char	*ptr_after;
 	char	*ptr_before;
-	size_t	len_total;
+	size_t	i;
+
+	ptr_after = ft_substr(*memo, (len_before + 1), len_total);
+	if (!ptr_after)
+		return (NULL);
+	i = 0;
+	memo_single = *memo;
+	if ((len_before + 1) < len_total)
+		len_total = (len_before + 1);
+	temp = (char *)malloc(sizeof(char) * (len_total + 1));
+	if (!temp)
+		return (NULL);
+	len_before = 0;
+	while (i < len_total)
+		temp[i++] = memo_single[len_before++];
+	temp[i] = '\0';
+	ptr_before = temp;
+	ft_free(memo, NULL);
+	*memo = ptr_after;
+	return (ptr_before);
+}
+
+static char	*ft_judge_line(char **memo, char **line, size_t len_total)
+{
+	char	*temp;
 	size_t	len_after;
 	size_t	len_before;
 
 	*line = NULL;
 	temp = ft_strchr(*memo, '\n');
-	len_total = ft_strlen(*memo);
 	if (temp == NULL && len_total)
 	{
 		*line = *memo;
@@ -43,16 +67,11 @@ static char	*ft_extraction_line(char **memo, char **line)
 		ft_free(memo, NULL);
 		return (NULL);
 	}
-	len_after = ft_strlen(temp);
+	len_after = 0;
+	while (temp[len_after] != '\0')
+		len_after++;
 	len_before = len_total - len_after;
-	ptr_after = ft_substr(*memo, (len_before + 1), len_total);
-	if (!ptr_after)
-		return (NULL);
-	ptr_before = ft_strndup(*memo, (len_before + 1));
-	ft_free(memo, NULL);
-	*line = ptr_before;
-	*memo = ptr_after;
-	return (*line);
+	return (ft_extraction_line(memo, len_before, len_total));
 }
 
 static char	*ft_read(int fd, char *memo, char *buff)
@@ -61,10 +80,8 @@ static char	*ft_read(int fd, char *memo, char *buff)
 	ssize_t		read_text_byte;
 
 	read_text_byte = 1;
-	printf("read_before:%s\n", memo);
-	while (read_text_byte > 0 && memo == NULL)
+	while (read_text_byte > 0 && BUFFER_SIZE >= 1)
 	{
-		printf("read_before:%s\n", memo);
 		read_text_byte = read(fd, buff, BUFFER_SIZE);
 		if (read_text_byte == -1)
 		{
@@ -72,13 +89,13 @@ static char	*ft_read(int fd, char *memo, char *buff)
 			return (memo);
 		}
 		buff[read_text_byte] = '\0';
+		if (ft_strchr(buff, '\n'))
+			read_text_byte = 0;
 		temp = memo;
 		memo = ft_strjoin(memo, buff);
-		if (memo == NULL)
+		if (!memo || (read_text_byte == 0 && memo == NULL))
 			return (NULL);
 		ft_free(&temp, NULL);
-		if (read_text_byte == 0 && memo == NULL)
-			return (NULL);
 	}
 	ft_free(&buff, NULL);
 	return (memo);
@@ -89,9 +106,10 @@ char	*get_next_line(int fd)
 	static char	*memo = NULL;
 	char		*line;
 	char		*buff;
+	size_t		len_total;
 
 	line = NULL;
-	if (0 > fd || 0 > BUFFER_SIZE || BUFFER_SIZE > SSIZE_MAX)
+	if (0 > fd || 0 > BUFFER_SIZE)
 		return (NULL);
 	buff = (char *)malloc(sizeof(char) * (BUFFER_SIZE + 1));
 	if (buff == NULL)
@@ -99,6 +117,9 @@ char	*get_next_line(int fd)
 	memo = ft_read(fd, memo, buff);
 	if (!memo)
 		return (NULL);
-	line = ft_extraction_line(&memo, &line);
+	len_total = 0;
+	while (memo[len_total] != '\0')
+		len_total++;
+	line = ft_judge_line(&memo, &line, len_total);
 	return (line);
 }
